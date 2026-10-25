@@ -1,7 +1,7 @@
 import pino from "pino";
 import { Page } from "rebrowser-playwright-core";
 
-const logger = pino();
+const logger = pino({ enabled: process.env.SUNO_OFFLINE !== '1' });
 
 /**
  * Pause for a specified number of seconds.

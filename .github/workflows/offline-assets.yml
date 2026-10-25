@@ -1,0 +1,25 @@
+name: Offline asset utility
+on:
+  push:
+    branches: [main, offline-assets-cli]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+        env:
+          ELECTRON_SKIP_DOWNLOAD: '1'
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - run: pnpm test:offline
+      - run: ./bin/suno-assets help

@@ -21,6 +21,73 @@
 
 ![suno-api banner](https://github.com/gcui-art/suno-api/blob/main/public/suno-banner.png)
 
+## Offline asset utility (this fork)
+
+This fork adds a local command-line path around the upstream client. It starts no HTTP
+listener and does not deploy the old upstream Next.js application. Suno's paid website
+subscription is not an official developer API. A working renewable account session and
+an account-supported model must be verified before generation is called usable.
+
+Use Node 22 or newer and the pinned pnpm:
+
+```bash
+pnpm install --frozen-lockfile --ignore-scripts
+./bin/suno-assets help
+./bin/suno-assets quota
+```
+
+The command loads SUNO_COOKIE from the process environment or reads the plain-string
+cookie header from AWS Secrets Manager games/suno-cookie in us-west-1 through the machine's
+own role. Never put a cookie in an argument, source, Markdown, a shell profile or .env.
+Missing authentication reports CREDENTIALS_UNAVAILABLE without printing AWS/provider
+errors, request headers or cookie values.
+
+A job specification contains a prompt, instrumental (boolean, default true), and an
+explicit model. Look up the actual model supported by the signed-in paid account; this
+utility deliberately does not silently use the upstream client's old model default.
+
+```json
+{"prompt":"Warm, gentle instrumental music for a cozy game","instrumental":true,"model":"<verified model ID>"}
+```
+
+```bash
+./bin/suno-assets submit job-spec.json ./jobs/cozy-theme-001
+./bin/suno-assets collect ./jobs/cozy-theme-001
+```
+
+Each submit sends at most one paid generation request and may create multiple candidate
+clips, as the upstream service does. A per-Unix-account lock serializes submissions.
+Plan the number of requests and credit budget before a batch. The tool does not buy a
+solver, top up an account or start an unattended CAPTCHA loop. If Suno requires a
+challenge, it reports CAPTCHA_REQUIRED before generation and pauses that provider.
+
+A job directory is exclusive. Its private job.json records submitting before the paid
+call, then records returned clip IDs before any collection. Ambiguous submission failures
+are saved as submission_unknown and are never automatically retried: check the account
+and reconcile that job before creating a new one. A stale submit.lock after a killed
+process needs inspection; its PID is recorded in the file.
+
+collect only reads saved IDs and downloads completed audio; it never starts a generation.
+It exits 2 while pending and may be called again with backoff. Streaming clips are not
+treated as final files. Downloads use HTTPS Suno CDN domains, refuse redirects and cap
+each asset at 100 MiB. Accepted files are reused on subsequent collect calls. Keep the
+job metadata and selected audio with the project's asset store, and check listening
+quality, duration, licensing and loop seams before shipping.
+
+```bash
+pnpm test:offline
+```
+
+Tests cover one-request submission behavior and ambiguous failures, resume without
+regeneration, download boundaries, credential-safe errors, suppressed upstream payload
+logging and refusing browser/CAPTCHA work in the offline path.
+
+The remaining upstream documentation describes its separate web application, including
+older setup advice. Do not expose that application or paste production cookies into its
+public demo.
+
+---
+
 ## Introduction
 
 Suno is an amazing AI music service. Although the official API is not yet available, we couldn't wait to integrate its capabilities somewhere.
