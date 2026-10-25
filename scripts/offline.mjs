@@ -42,6 +42,7 @@ async function saveJob(directory, job) {
 export async function submitJob(client, specification, directory, now = () => new Date().toISOString()) {
   const spec = validateSpec(specification);
   // mkdir is deliberately exclusive: an interrupted or completed job is never silently submitted again.
+  await mkdir(path.dirname(directory), { recursive: true, mode: 0o700 });
   await mkdir(directory, { mode: 0o700 });
   const job = { version: 1, ...spec, created_at: now(), state: 'submitting', clips: [] };
   await saveJob(directory, job);

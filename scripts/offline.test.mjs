@@ -8,7 +8,7 @@ import { submitJob, collectJob, publicError, validateSpec, validateAudioUrl } fr
 const spec = { prompt: 'A calm instrumental scene', model: 'verified-account-model', instrumental: true };
 test('paid submissions are not retried after an ambiguous failure; their state survives', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'suno-test-'));
-  const directory = path.join(root, 'job');
+  const directory = path.join(root, 'jobs', 'job');
   let submissions = 0;
   const error = Object.assign(new Error('private request headers and fixture-cookie'), {
     response: { status: 503 }, config: { headers: { Cookie: 'fixture-cookie', Authorization: 'fixture-token' } },
