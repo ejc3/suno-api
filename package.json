@@ -12,7 +12,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "assets": "node --import tsx scripts/offline.mjs",
+    "test:offline": "node --import tsx --test scripts/offline*.test.mjs"
   },
   "dependencies": {
     "@2captcha/captcha-solver": "^1.3.0",
@@ -53,6 +55,8 @@
     "eslint-config-next": "14.1.4",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
-  }
+    "typescript": "^5",
+    "tsx": "^4.20.6"
+  },
+  "packageManager": "pnpm@12.15.0"
 }

@@ -17,7 +17,7 @@ const globalForSunoApi = global as unknown as { sunoApiCache?: Map<string, SunoA
 const cache = globalForSunoApi.sunoApiCache || new Map<string, SunoApi>();
 globalForSunoApi.sunoApiCache = cache;
 
-const logger = pino();
+const logger = pino({ enabled: process.env.SUNO_OFFLINE !== '1' });
 export const DEFAULT_MODEL = 'chirp-v3-5';
 
 export interface AudioInfo {
@@ -67,7 +67,7 @@ interface PersonaResponse {
   is_following: boolean;
 }
 
-class SunoApi {
+export class SunoApi {
   private static BASE_URL: string = 'https://studio-api.prod.suno.com';
   private static CLERK_BASE_URL: string = 'https://auth.suno.com';
   private static CLERK_VERSION = '5.117.0';
@@ -88,6 +88,7 @@ class SunoApi {
     this.deviceId = this.cookies.ajs_anonymous_id || randomUUID();
     this.client = axios.create({
       withCredentials: true,
+      timeout: process.env.SUNO_OFFLINE === '1' ? 20000 : undefined,
       headers: {
         'Affiliate-Id': 'undefined',
         'Device-Id': `"${this.deviceId}"`,
@@ -307,6 +308,10 @@ class SunoApi {
   public async getCaptcha(): Promise<string|null> {
     if (!await this.captchaRequired())
       return null;
+
+    if (process.env.SUNO_OFFLINE === '1') {
+      throw new Error('SUNO_CAPTCHA_REQUIRED');
+    }
 
     logger.info('CAPTCHA required. Launching browser...')
     const browser = await this.launchBrowser();
